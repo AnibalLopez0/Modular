@@ -42,7 +42,6 @@ body {
   max-width: 860px;
 }
 
-/* Header */
 .fila-encabezado {
   display: flex;
   align-items: center;
@@ -65,16 +64,14 @@ body {
   white-space: nowrap;
 }
 .btn-volver:hover { background: #6a4dab; color: #fff; }
-
 .fila-encabezado h1 {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1a1a2e;
   margin: 0;
-  flex: 1;
 }
 
-/* Tarjeta por conducta */
+/* Bloque por conducta */
 .conducta-bloque {
   background: #f8f5fd;
   border-radius: 16px;
@@ -86,7 +83,6 @@ body {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 .conducta-encabezado {
   display: flex;
   align-items: flex-start;
@@ -94,20 +90,11 @@ body {
   gap: 1rem;
   margin-bottom: 0.25rem;
 }
-.conducta-titulo {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-.conducta-desc {
-  font-size: 0.82rem;
-  color: #888;
-  margin-bottom: 1rem;
-  line-height: 1.5;
-}
+.conducta-titulo { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; }
+.conducta-desc   { font-size: 0.82rem; color: #888; margin-bottom: 1rem; line-height: 1.5; }
 
-/* Badge riesgo */
-.riesgo-badge {
+/* Badge nivel */
+.nivel-badge {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -115,17 +102,12 @@ body {
   border-radius: 20px;
   white-space: nowrap;
 }
-.riesgo-bajo  { background: #d4f7e4; color: #1a7a45; }
-.riesgo-medio { background: #fff3cd; color: #856404; }
-.riesgo-alto  { background: #fde8e8; color: #c0392b; }
+.nivel-bajo  { background: #d4f7e4; color: #1a7a45; }
+.nivel-medio { background: #fff3cd; color: #856404; }
+.nivel-alto  { background: #fde8e8; color: #c0392b; }
 
 /* Métricas */
-.metricas {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.1rem;
-  flex-wrap: wrap;
-}
+.metricas { display: flex; gap: 0.75rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
 .metrica {
   background: #fff;
   border-radius: 12px;
@@ -134,36 +116,45 @@ body {
   min-width: 140px;
   box-shadow: 0 1px 4px rgba(100,70,180,0.07);
 }
-.metrica-label {
-  font-size: 0.7rem;
-  color: #aaa;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
-}
-.metrica-valor {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-.metrica-valor.pred { color: #c07c00; }
-.metrica-sub { font-size: 0.68rem; color: #aaa; }
+.metrica-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.metrica-valor { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; }
+.metrica-valor.bajo  { color: #1a7a45; }
+.metrica-valor.medio { color: #856404; }
+.metrica-valor.alto  { color: #c0392b; }
+.metrica-sub   { font-size: 0.68rem; color: #aaa; }
 
-/* Leyenda */
-.leyenda {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
+/* Barra de probabilidad */
+.prob-barra-wrap {
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.1rem;
+  box-shadow: 0 1px 4px rgba(100,70,180,0.07);
 }
-.leyenda-item {
+.prob-barra-label {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  justify-content: space-between;
   font-size: 0.75rem;
   color: #888;
+  margin-bottom: 6px;
 }
-.leyenda-dot { width: 10px; height: 10px; border-radius: 50%; }
+.prob-barra-label span:last-child { font-weight: 700; color: #1a1a2e; }
+.prob-barra-bg {
+  background: #ede8f7;
+  border-radius: 10px;
+  height: 10px;
+  overflow: hidden;
+}
+.prob-barra-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.8s ease;
+}
+
+/* Leyenda */
+.leyenda { display: flex; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.leyenda-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #888; }
+.leyenda-dot  { width: 10px; height: 10px; border-radius: 50%; }
 
 /* Gráficas */
 .tarjeta-grafica {
@@ -172,21 +163,14 @@ body {
   padding: 1rem 1.1rem 0.9rem;
   box-shadow: 0 1px 4px rgba(100,70,180,0.07);
 }
-.titulo-grafica {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #555;
-  margin-bottom: 0.5rem;
-}
+.titulo-grafica { font-size: 0.88rem; font-weight: 600; color: #555; margin-bottom: 0.5rem; }
 .contenedor-canvas        { height: 155px; }
 .contenedor-canvas.pequeno { height: 135px; }
 
+.modelo-tag { font-size: 0.68rem; color: #bbb; margin-top: 0.75rem; text-align: right; }
+
 /* Estado */
-.estado {
-  text-align: center;
-  padding: 3rem 0;
-  color: #aaa;
-}
+.estado { text-align: center; padding: 3rem 0; color: #aaa; }
 .spinner {
   width: 32px; height: 32px;
   border: 3px solid #e8e1f5;
@@ -233,7 +217,7 @@ async function cargarDashboard() {
 
     if (!data.conductas || data.conductas.length === 0) {
       document.getElementById("estado").style.display = "block";
-      document.getElementById("estado").innerHTML = "<p>No hay conductas registradas.</p>";
+      document.getElementById("estado").innerHTML = "<p>No hay conductas registradas para este paciente.</p>";
       return;
     }
 
@@ -255,37 +239,50 @@ function renderConducta(c, idx) {
     div.innerHTML = `
       <div class="conducta-encabezado">
         <div class="conducta-titulo">${c.titulo}</div>
-        <span class="riesgo-badge riesgo-bajo">Sin datos suficientes</span>
+        <span class="nivel-badge nivel-bajo">Sin datos suficientes</span>
       </div>
       <p class="conducta-desc">${c.error}</p>`;
     cont.appendChild(div);
     return;
   }
 
-  const riesgoClass = { bajo:"riesgo-bajo", medio:"riesgo-medio", alto:"riesgo-alto" }[c.nivel_riesgo] || "riesgo-bajo";
-  const predArr  = c.prediccion.intensidad;
-  const predProm = (predArr.reduce((a,b)=>a+b,0)/predArr.length).toFixed(1);
-  const predMin  = Math.min(...predArr).toFixed(1);
-  const predMax  = Math.max(...predArr).toFixed(1);
+  const nivelClass = { bajo:"nivel-bajo", medio:"nivel-medio", alto:"nivel-alto" }[c.nivel] || "nivel-bajo";
+  const probPct    = Math.round(c.probabilidad * 100);
+  const barColor   = { bajo:"#4ade80", medio:"#facc15", alto:"#f87171" }[c.nivel] || "#4ade80";
 
-  const idInt  = `int-${idx}`;
-  const idDur  = `dur-${idx}`;
   const idFrec = `frec-${idx}`;
+  const idDur  = `dur-${idx}`;
 
   div.innerHTML = `
     <div class="conducta-encabezado">
       <div class="conducta-titulo">${c.titulo}</div>
-      <span class="riesgo-badge ${riesgoClass}">Riesgo ${c.nivel_riesgo} · ${(c.riesgo*100).toFixed(0)}%</span>
+      <span class="nivel-badge ${nivelClass}">Probabilidad ${c.nivel} · ${probPct}%</span>
     </div>
     ${c.descripcion ? `<p class="conducta-desc">${c.descripcion}</p>` : ""}
 
+    <!-- Barra de probabilidad -->
+    <div class="prob-barra-wrap">
+      <div class="prob-barra-label">
+        <span>Probabilidad de ocurrencia — próxima semana (${c.prediccion.proxima_semana})</span>
+        <span>${probPct}%</span>
+      </div>
+      <div class="prob-barra-bg">
+        <div class="prob-barra-fill" style="width:${probPct}%; background:${barColor}"></div>
+      </div>
+    </div>
+
+    <!-- Métricas -->
     <div class="metricas">
-      ${c.usa_intensidad ? `
       <div class="metrica">
-        <div class="metrica-label">Predicción intensidad (7 días)</div>
-        <div class="metrica-valor pred">${predProm}<span style="font-size:.75rem;color:#aaa"> /10</span></div>
-        <div class="metrica-sub">Mín ${predMin} · Máx ${predMax}</div>
-      </div>` : ""}
+        <div class="metrica-label">Episodios predichos</div>
+        <div class="metrica-valor ${c.nivel}">${c.prediccion.episodios}</div>
+        <div class="metrica-sub">próxima semana</div>
+      </div>
+      <div class="metrica">
+        <div class="metrica-label">Promedio histórico</div>
+        <div class="metrica-valor">${c.prediccion.promedio_historico}</div>
+        <div class="metrica-sub">episodios / semana</div>
+      </div>
       <div class="metrica">
         <div class="metrica-label">Registros totales</div>
         <div class="metrica-valor">${c.historial.fechas.length}</div>
@@ -293,45 +290,37 @@ function renderConducta(c, idx) {
       </div>
     </div>
 
+    <!-- Leyenda -->
     <div class="leyenda">
       <div class="leyenda-item">
-        <div class="leyenda-dot" style="background:${COLOR_HIST}"></div>Historial real
+        <div class="leyenda-dot" style="background:${COLOR_HIST}"></div>Historial semanal
       </div>
       <div class="leyenda-item">
-        <div class="leyenda-dot" style="background:${COLOR_PRED}"></div>Predicción 7 días
+        <div class="leyenda-dot" style="background:${COLOR_PRED}; border-radius:2px"></div>Predicción próx. semana
       </div>
     </div>
 
+    <!-- Gráficas -->
     <div class="row g-3">
-      ${c.usa_intensidad ? `
       <div class="col-12">
         <div class="tarjeta-grafica">
-          <div class="titulo-grafica">Intensidad</div>
-          <div class="contenedor-canvas"><canvas id="${idInt}"></canvas></div>
+          <div class="titulo-grafica">Frecuencia semanal</div>
+          <div class="contenedor-canvas"><canvas id="${idFrec}"></canvas></div>
         </div>
-      </div>` : ""}
+      </div>
       ${c.usa_duracion ? `
-      <div class="col-12 col-md-6">
+      <div class="col-12">
         <div class="tarjeta-grafica">
-          <div class="titulo-grafica">Duración (min)</div>
+          <div class="titulo-grafica">Duración por episodio (min)</div>
           <div class="contenedor-canvas pequeno"><canvas id="${idDur}"></canvas></div>
         </div>
       </div>` : ""}
-      <div class="col-12 col-md-6">
-        <div class="tarjeta-grafica">
-          <div class="titulo-grafica">Frecuencia diaria</div>
-          <div class="contenedor-canvas pequeno"><canvas id="${idFrec}"></canvas></div>
-        </div>
-      </div>
     </div>
+
+    <div class="modelo-tag">modelo: ${c.modelo}</div>
   `;
 
   cont.appendChild(div);
-
-  const fechasHist  = c.historial.fechas;
-  const fechasPred  = c.prediccion.fechas;
-  const todasFechas = [...fechasHist, ...fechasPred];
-  const histLen     = fechasHist.length;
 
   const commonOpts = () => ({
     responsive: true,
@@ -339,90 +328,73 @@ function renderConducta(c, idx) {
     interaction: { mode: "index", intersect: false },
     plugins: { legend: { display: false } },
     scales: {
-      x: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { maxTicksLimit: 7, maxRotation: 0, font: { family: "'DM Sans'" } } },
+      x: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { maxTicksLimit: 8, maxRotation: 0, font: { family: "'DM Sans'" } } },
       y: { grid: { color: "rgba(0,0,0,0.04)" }, beginAtZero: true, ticks: { font: { family: "'DM Sans'" } } }
     }
   });
 
-  // Intensidad: historial + predicción en la misma gráfica
-  if (c.usa_intensidad) {
-    const histData = [...c.historial.intensidad, null];
-    const predData = [
-      ...Array(histLen - 1).fill(null),
-      c.historial.intensidad[histLen - 1],
-      ...c.prediccion.intensidad
-    ];
-    new Chart(document.getElementById(idInt), {
-      type: "line",
-      data: {
-        labels: todasFechas,
-        datasets: [
-          {
-            label: "Historial",
-            data: histData,
-            borderColor: COLOR_HIST,
-            backgroundColor: COLOR_HIST + "22",
-            pointRadius: 3,
-            tension: 0.4,
-            fill: true,
-            spanGaps: false,
-          },
-          {
-            label: "Predicción",
-            data: predData,
-            borderColor: COLOR_PRED,
-            backgroundColor: COLOR_PRED + "18",
-            borderDash: [5, 4],
-            pointRadius: 4,
-            pointStyle: "rectRot",
-            tension: 0.4,
-            fill: true,
-            spanGaps: false,
-          }
-        ]
-      },
-      options: { ...commonOpts(), scales: {
-        x: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
-        y: { grid: { color: "rgba(0,0,0,0.04)" }, min: 0, max: 10 }
-      }}
-    });
-  }
+  // Frecuencia semanal + predicción
+  const semanas     = [...c.historial.semanas, c.prediccion.proxima_semana];
+  const freqHist    = [...c.historial.freq_semanal, null];
+  const freqPred    = [
+    ...Array(c.historial.semanas.length - 1).fill(null),
+    c.historial.freq_semanal[c.historial.freq_semanal.length - 1],
+    c.prediccion.episodios
+  ];
+
+  new Chart(document.getElementById(idFrec), {
+    type: "line",
+    data: {
+      labels: semanas,
+      datasets: [
+        {
+          label: "Historial",
+          data: freqHist,
+          borderColor: COLOR_HIST,
+          backgroundColor: COLOR_HIST + "22",
+          pointRadius: 4,
+          tension: 0.4,
+          fill: true,
+          spanGaps: false,
+        },
+        {
+          label: "Predicción",
+          data: freqPred,
+          borderColor: COLOR_PRED,
+          backgroundColor: COLOR_PRED + "18",
+          borderDash: [5, 4],
+          pointRadius: 5,
+          pointStyle: "rectRot",
+          tension: 0.4,
+          fill: true,
+          spanGaps: false,
+        }
+      ]
+    },
+    options: commonOpts()
+  });
 
   // Duración
-  if (c.usa_duracion) {
+  if (c.usa_duracion && document.getElementById(idDur)) {
     new Chart(document.getElementById(idDur), {
       type: "bar",
       data: {
-        labels: fechasHist,
-        datasets: [{ label: "Duración", data: c.historial.duracion, backgroundColor: COLOR_HIST + "99", borderColor: COLOR_HIST, borderWidth: 1, borderRadius: 4 }]
+        labels: c.historial.fechas,
+        datasets: [{
+          label: "Duración",
+          data: c.historial.duracion,
+          backgroundColor: COLOR_HIST + "99",
+          borderColor: COLOR_HIST,
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
       },
       options: commonOpts()
     });
   }
-
-  // Frecuencia
-  const freqMap = {};
-  fechasHist.forEach(f => { freqMap[f] = (freqMap[f] || 0) + 1; });
-  new Chart(document.getElementById(idFrec), {
-    type: "line",
-    data: {
-      labels: Object.keys(freqMap),
-      datasets: [{
-        label: "Frecuencia",
-        data: Object.values(freqMap),
-        borderColor: COLOR_HIST,
-        backgroundColor: COLOR_HIST + "22",
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-      }]
-    },
-    options: commonOpts()
-  });
 }
 
 cargarDashboard();
 </script>
 </body>
 </html>
-

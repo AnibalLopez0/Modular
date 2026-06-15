@@ -23,10 +23,6 @@ DB_CONFIG = {
     "port":     int(os.getenv("DB_PORT", 3306)),
 }
 
-# --------------------------------
-# Pool de conexiones (mejor para Docker)
-# --------------------------------
-
 pool = pooling.MySQLConnectionPool(
     pool_name="modular_pool",
     pool_size=5,
@@ -35,10 +31,6 @@ pool = pooling.MySQLConnectionPool(
 
 def get_conn():
     return pool.get_connection()
-
-# --------------------------------
-# Crear app Flask
-# --------------------------------
 
 app = Flask(__name__)
 CORS(app)
@@ -83,7 +75,7 @@ def obtener_conductas(id_paciente):
     return resultado
 
 # --------------------------------
-# Obtener datos históricos de UNA conducta
+# Obtener datos históricos
 # --------------------------------
 
 def obtener_datos(id_paciente, id_plantilla):
@@ -104,61 +96,73 @@ def obtener_datos(id_paciente, id_plantilla):
 
     df = pd.DataFrame(rows, columns=["fecha", "intensidad", "duracion", "descripcion"])
     df["fecha"] = pd.to_datetime(df["fecha"])
-    df["dia"] = (df["fecha"] - df["fecha"].min()).dt.days
     return df
 
 # --------------------------------
-# Predicción con regresión lineal
+# Agrupar por semana y predecir frecuencia
 # --------------------------------
 
-def predecir_regresion(df, dias=7):
-    df = df.dropna(subset=["intensidad"])
-    X = df[["dia"]]
-    y = df["intensidad"]
-    modelo = LinearRegression()
+def predecir_frecuencia_semanal(df, semanas=1):
+    # Agrupar registros por semana
+    df["semana"] = df["fecha"].dt.to_period("W").apply(lambda r: r.start_time)
+    semanal = df.groupby("semana").size().reset_index(name="episodios")
+    semanal["idx"] = range(len(semanal))
+
+    if len(semanal) < 2:
+        # Muy pocos datos, usar promedio
+        promedio = semanal["episodios"].mean()
+        return round(promedio), semanal
+
+    X = semanal[["idx"]]
+    y = semanal["episodios"]
+
+    if len(semanal) >= 6:
+        modelo = RandomForestRegressor(n_estimators=100, random_state=42)
+        modelo_nombre = "random_forest"
+    else:
+        modelo = LinearRegression()
+        modelo_nombre = "regresion_lineal"
+
     modelo.fit(X, y)
-    ultimo_dia = df["dia"].max()
-    predicciones = []
-    for i in range(1, dias + 1):
-        pred = modelo.predict([[ultimo_dia + i]])[0]
-        predicciones.append(round(max(1, min(10, pred)), 2))
-    return predicciones
+
+    ultimo_idx = semanal["idx"].max()
+    pred = modelo.predict([[ultimo_idx + 1]])[0]
+    pred = max(0, round(pred))
+
+    return pred, semanal, modelo_nombre
 
 # --------------------------------
-# Predicción con Random Forest
+# Calcular probabilidad de ocurrencia
 # --------------------------------
 
-def predecir_random_forest(df, dias=7):
-    df = df.fillna(0)
-    X = df[["dia", "duracion"]]
-    y = df["intensidad"]
-    modelo = RandomForestRegressor(n_estimators=100, random_state=42)
-    modelo.fit(X, y)
-    ultimo_dia = df["dia"].max()
-    duracion_prom = df["duracion"].mean()
-    predicciones = []
-    for i in range(1, dias + 1):
-        pred = modelo.predict([[ultimo_dia + i, duracion_prom]])[0]
-        predicciones.append(round(max(1, min(10, pred)), 2))
-    return predicciones
+def calcular_probabilidad(episodios_predichos, promedio_historico):
+    if promedio_historico == 0:
+        return 0.0, "bajo"
 
-# --------------------------------
-# Calcular riesgo
-# --------------------------------
+    ratio = episodios_predichos / promedio_historico
 
-def calcular_riesgo(predicciones):
-    promedio = np.mean(predicciones)
-    riesgo = round(promedio / 10, 2)
-    if riesgo < 0.4:
+    if episodios_predichos == 0:
+        prob = 0.1
+    elif ratio < 0.5:
+        prob = 0.3
+    elif ratio < 1.0:
+        prob = 0.55
+    elif ratio < 1.5:
+        prob = 0.75
+    else:
+        prob = 0.90
+
+    if prob < 0.4:
         nivel = "bajo"
-    elif riesgo < 0.7:
+    elif prob < 0.7:
         nivel = "medio"
     else:
         nivel = "alto"
-    return riesgo, nivel
+
+    return round(prob, 2), nivel
 
 # --------------------------------
-# Endpoint: todas las conductas del paciente con predicciones
+# Endpoint dashboard
 # --------------------------------
 
 @app.route("/dashboard/<int:id_terapeuta>/<int:id_paciente>")
@@ -175,114 +179,71 @@ def dashboard(id_terapeuta, id_paciente):
     resultado = []
 
     for conducta in conductas:
-        id_plantilla    = conducta["id_plantilla"]
-        titulo          = conducta["titulo"]
-        usa_intensidad  = conducta["usa_intensidad"]
-        usa_duracion    = conducta["usa_duracion"]
+        id_plantilla   = conducta["id_plantilla"]
+        titulo         = conducta["titulo"]
+        usa_intensidad = conducta["usa_intensidad"]
+        usa_duracion   = conducta["usa_duracion"]
 
         df = obtener_datos(id_paciente, id_plantilla)
 
         if df is None or len(df) < 2:
             resultado.append({
-                "id_plantilla":   id_plantilla,
-                "titulo":         titulo,
-                "usa_intensidad": usa_intensidad,
-                "usa_duracion":   usa_duracion,
-                "error":          "Muy pocos datos para predicción"
+                "id_plantilla": id_plantilla,
+                "titulo":       titulo,
+                "error":        "Muy pocos datos para predicción"
             })
             continue
 
-        # Elegir modelo según cantidad de registros
-        if len(df) < 10:
-            predicciones = predecir_regresion(df, dias=7)
-            modelo_usado = "regresion_lineal"
-        else:
-            predicciones = predecir_random_forest(df, dias=7)
-            modelo_usado = "random_forest"
+        # Predicción de frecuencia semanal
+        pred_result  = predecir_frecuencia_semanal(df)
+        episodios_pred = pred_result[0]
+        semanal        = pred_result[1]
+        modelo_usado   = pred_result[2] if len(pred_result) > 2 else "promedio"
 
-        riesgo, nivel = calcular_riesgo(predicciones)
+        promedio_historico = semanal["episodios"].mean()
+        probabilidad, nivel = calcular_probabilidad(episodios_pred, promedio_historico)
 
-        fecha_max = df["fecha"].max()
-        fechas_pred = [
-            (fecha_max + pd.Timedelta(days=i)).strftime("%Y-%m-%d")
-            for i in range(1, 8)
-        ]
+        # Historial semanal para la gráfica
+        semanas_labels = semanal["semana"].dt.strftime("%Y-%m-%d").tolist()
+        semanas_vals   = semanal["episodios"].tolist()
 
-        # Última descripción registrada
-        ultima_descripcion = df["descripcion"].dropna().iloc[-1] if df["descripcion"].notna().any() else ""
+        # Próxima semana
+        ultima_semana  = semanal["semana"].max()
+        proxima_semana = (ultima_semana + pd.Timedelta(weeks=1)).strftime("%Y-%m-%d")
+
+        # Última descripción
+        ultima_desc = df["descripcion"].dropna().iloc[-1] if df["descripcion"].notna().any() else ""
+
+        # Duración promedio para mostrar
+        dur_prom = round(df["duracion"].dropna().mean(), 1) if usa_duracion and df["duracion"].notna().any() else None
 
         resultado.append({
-            "id_plantilla":       id_plantilla,
-            "titulo":             titulo,
-            "descripcion":        ultima_descripcion,
-            "usa_intensidad":     bool(usa_intensidad),
-            "usa_duracion":       bool(usa_duracion),
-            "modelo":             modelo_usado,
+            "id_plantilla":      id_plantilla,
+            "titulo":            titulo,
+            "descripcion":       ultima_desc,
+            "usa_intensidad":    bool(usa_intensidad),
+            "usa_duracion":      bool(usa_duracion),
+            "modelo":            modelo_usado,
             "historial": {
-                "fechas":      df["fecha"].dt.strftime("%Y-%m-%d").tolist(),
-                "intensidad":  df["intensidad"].fillna(0).tolist(),
-                "duracion":    df["duracion"].fillna(0).tolist(),
-                "frecuencia":  df.groupby("fecha").size().tolist(),
+                "fechas":        df["fecha"].dt.strftime("%Y-%m-%d").tolist(),
+                "duracion":      df["duracion"].fillna(0).tolist() if usa_duracion else [],
+                "semanas":       semanas_labels,
+                "freq_semanal":  semanas_vals,
             },
             "prediccion": {
-                "fechas":      fechas_pred,
-                "intensidad":  predicciones,
+                "proxima_semana":   proxima_semana,
+                "episodios":        int(episodios_pred),
+                "promedio_historico": round(float(promedio_historico), 1),
             },
-            "riesgo":       riesgo,
-            "nivel_riesgo": nivel,
+            "probabilidad":  probabilidad,
+            "nivel":         nivel,
         })
 
     return jsonify({"paciente": id_paciente, "conductas": resultado})
 
 
 # --------------------------------
-# Endpoint: una sola conducta (opcional, para detalle)
-# --------------------------------
-
-@app.route("/prediccion/<int:id_terapeuta>/<int:id_paciente>/<int:id_plantilla>")
-def prediccion_conducta(id_terapeuta, id_paciente, id_plantilla):
-
-    if not verificar_relacion(id_terapeuta, id_paciente):
-        return jsonify({"error": "No autorizado"}), 403
-
-    df = obtener_datos(id_paciente, id_plantilla)
-
-    if df is None or len(df) < 2:
-        return jsonify({"error": "Muy pocos datos para predicción"})
-
-    if len(df) < 10:
-        predicciones = predecir_regresion(df, dias=7)
-        modelo_usado = "regresion_lineal"
-    else:
-        predicciones = predecir_random_forest(df, dias=7)
-        modelo_usado = "random_forest"
-
-    riesgo, nivel = calcular_riesgo(predicciones)
-
-    fecha_max = df["fecha"].max()
-    fechas_pred = [
-        (fecha_max + pd.Timedelta(days=i)).strftime("%Y-%m-%d")
-        for i in range(1, 8)
-    ]
-
-    return jsonify({
-        "modelo":    modelo_usado,
-        "historial": {
-            "fechas":     df["fecha"].dt.strftime("%Y-%m-%d").tolist(),
-            "intensidad": df["intensidad"].fillna(0).tolist(),
-            "duracion":   df["duracion"].fillna(0).tolist(),
-        },
-        "prediccion": {
-            "fechas":     fechas_pred,
-            "intensidad": predicciones,
-        },
-        "riesgo":       riesgo,
-        "nivel_riesgo": nivel,
-    })
-
-
-# --------------------------------
-# Health check para Docker
+# Health check
 # --------------------------------
 
 @app.route("/health")
@@ -291,7 +252,7 @@ def health():
 
 
 # --------------------------------
-# Ejecutar servidor
+# Ejecutar
 # --------------------------------
 
 if __name__ == "__main__":
